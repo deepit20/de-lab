@@ -1,0 +1,29 @@
+# Skill taxonomy used for job-description analysis (offline keyword matching → curriculum topics).
+skills:
+  - { id: sql, label: SQL, track: sql, topics: [sql-select-basics, sql-aggregation, sql-joins, sql-window-ranking, sql-subqueries-ctes], keywords: [sql, "t-sql", "pl/sql", "query", "queries"] }
+  - { id: sql-advanced, label: Advanced SQL / window functions, track: sql, topics: [sql-window-ranking, sql-window-analytics, sql-patterns], keywords: ["window function", "advanced sql", "complex queries", "cte"] }
+  - { id: sql-perf, label: Query optimisation, track: sql, topics: [sql-performance, bq-cost], keywords: ["query optimization", "query optimisation", "performance tuning", "indexing", "optimize queries"] }
+  - { id: python, label: Python, track: py, topics: [py-functions, py-dicts-sets, py-files, py-exceptions], keywords: [python] }
+  - { id: pandas, label: pandas, track: py, topics: [py-pandas], keywords: [pandas, numpy] }
+  - { id: apis, label: APIs / REST ingestion, track: py, topics: [py-apis, py-json], keywords: ["rest api", "apis", "api integration", "json", "webhooks"] }
+  - { id: testing, label: Testing / CI, track: py, topics: [py-testing, af-production], keywords: [pytest, "unit test", "ci/cd", "cicd", "testing"] }
+  - { id: modeling, label: Data modelling, track: dw, topics: [dw-facts-dimensions, dw-fact-types, dw-keys-conformed], keywords: ["data modeling", "data modelling", "dimensional", "star schema", "kimball", "snowflake schema"] }
+  - { id: scd, label: Slowly changing dimensions, track: dw, topics: [dw-scd], keywords: ["scd", "slowly changing"] }
+  - { id: warehouse, label: Data warehousing, track: dw, topics: [dw-concepts, dw-medallion, def-lake-warehouse], keywords: ["data warehouse", "data warehousing", "dwh", "edw", "lakehouse", "data lake"] }
+  - { id: bigquery, label: BigQuery, track: bq, topics: [bq-architecture, bq-partition-cluster, bq-cost, bq-nested], keywords: [bigquery, "big query", "bq"] }
+  - { id: gcp, label: GCP services, track: bq, topics: [gcp-foundations, gcp-services], keywords: [gcp, "google cloud", "cloud storage", "gcs", "pub/sub", "pubsub", dataflow, dataproc, "cloud functions", "cloud run"] }
+  - { id: cloud, label: Cloud platforms, track: def, topics: [def-cloud], keywords: [aws, azure, cloud, "s3", "redshift", "snowflake", "databricks"] }
+  - { id: etl, label: ETL / ELT pipelines, track: etl, topics: [etl-vs-elt, etl-load-strategies, etl-incremental], keywords: [etl, elt, "data pipeline", "data pipelines", "ingestion"] }
+  - { id: cdc, label: CDC / incremental loads, track: etl, topics: [etl-incremental, etl-cdc], keywords: ["cdc", "change data capture", "incremental", "debezium", "datastream"] }
+  - { id: dbt, label: dbt, track: etl, topics: [etl-dbt], keywords: [dbt, dataform] }
+  - { id: dq, label: Data quality, track: def, topics: [def-data-quality, etl-validation], keywords: ["data quality", "data validation", "great expectations", "data observability", "data integrity"] }
+  - { id: airflow, label: Apache Airflow, track: af, topics: [af-concepts, af-dags, af-scheduling, af-production], keywords: [airflow, "cloud composer", composer, orchestration, "workflow orchestration"] }
+  - { id: spark, label: Spark / PySpark, track: spark, topics: [spark-architecture, spark-dataframes, spark-agg-joins, spark-partitions, spark-performance], keywords: [spark, pyspark, "spark sql", databricks, hadoop, "big data"] }
+  - { id: streaming, label: Streaming, track: def, topics: [def-batch-streaming, spark-streaming], keywords: [streaming, kafka, "real-time", "real time", flink, kinesis] }
+  - { id: formats, label: File formats, track: def, topics: [def-file-formats], keywords: [parquet, avro, orc, "delta lake", iceberg] }
+  - { id: governance, label: Governance & security, track: def, topics: [def-governance], keywords: [governance, "data catalog", lineage, gdpr, pii, "data privacy", iam] }
+  - { id: distributed, label: Distributed systems, track: def, topics: [def-distributed], keywords: ["distributed", "scalable", "large-scale", "petabyte", "terabyte"] }
+  - { id: bi, label: BI / reporting, track: dw, topics: [dw-facts-dimensions], keywords: ["power bi", tableau, looker, "data studio", dashboards, reporting] }
+  - { id: communication, label: Communication / stakeholders, track: int, topics: [int-project-story], keywords: [stakeholder, communication, "cross-functional", collaborate, "business requirements"] }
+  - { id: git, label: Git / version control, track: py, topics: [py-modules], keywords: [git, github, gitlab, "version control"] }
+  - { id: docker, label: Docker / containers, track: def, topics: [def-cloud], keywords: [docker, kubernetes, containers, gke] }

@@ -1,0 +1,350 @@
+projects:
+  - id: p-sql-analytics
+    title: E-commerce analytics with SQL
+    level: guided
+    tracks: [sql, dw]
+    hours: 4
+    summary: Answer a real business brief end-to-end in SQL on the practice database — with checks and a written summary.
+    skills: [joins, aggregation, window functions, data quality checks, communicating results]
+    topics: [sql-joins, sql-aggregation, sql-window-ranking, sql-window-analytics, sql-patterns, def-data-quality]
+    brief: |
+      The head of e-commerce wants a **monthly business review** pack. Work in the project workspace (`.sql` files run against the playground database) and produce queries that answer each question, plus a short written summary in the design doc.
+
+      You'll practise turning vague questions into precise definitions (what counts as revenue? which orders?), checking your numbers, and explaining findings.
+    milestones:
+      - title: Define the metrics
+        detail: |
+          In the design doc, define **revenue**, **active customer**, **repeat customer** and **AOV** precisely (which statuses count? gross or net of returns?). Ambiguity is the #1 cause of disagreeing dashboards.
+        hints: ["Decide whether `returned` and `cancelled` count as revenue — and write it down."]
+      - title: Data quality checks first
+        detail: |
+          Write `checks.sql` with queries that should return zero rows: duplicate order ids, orders whose amount ≠ sum of items, orders referencing unknown customers, negative amounts.
+        hints: ["Reuse the reconciliation pattern from the joins topic."]
+      - title: Monthly KPIs
+        detail: |
+          `kpis.sql`: per month — orders, revenue, active customers, AOV, and month-over-month growth %.
+        hints: ["Aggregate to the month first, then LAG."]
+      - title: Customer segmentation
+        detail: |
+          `segments.sql`: classify customers as new / repeat / lapsed (no order in 90 days before the last date in the data) and count each per segment.
+      - title: Top products and categories
+        detail: |
+          `products.sql`: top 3 products per category by revenue, and each category's share of total revenue.
+      - title: Write the summary
+        detail: |
+          In the design doc, write 5–8 bullet findings with numbers, and one recommendation. Then fill the self-review.
+    deliverables:
+      - checks.sql, kpis.sql, segments.sql, products.sql
+      - Metric definitions and findings in the design doc
+    rubric:
+      - { id: correct, label: Correctness, desc: Numbers are right and reconcile with checks }
+      - { id: definitions, label: Clear definitions, desc: Metrics are precisely defined and consistently used }
+      - { id: sql, label: SQL quality, desc: Readable CTEs, good names, no fan-out }
+      - { id: insight, label: Insight, desc: Findings are specific, quantified and useful }
+    defence:
+      - How did you define revenue and why?
+      - How do you know your numbers are correct?
+      - Which query was hardest, and how did you approach it?
+      - What would change if this ran daily on 1 billion orders in BigQuery?
+    starter:
+      checks.sql: |
+        -- Each check should return ZERO rows when the data is healthy.
+        -- 1. Duplicate order ids
+        SELECT order_id, COUNT(*) FROM orders GROUP BY order_id HAVING COUNT(*) > 1;
+      kpis.sql: |
+        -- grain: one row per month
+        WITH monthly AS (
+          SELECT strftime('%Y-%m', order_date) AS month
+          FROM orders
+          GROUP BY month
+        )
+        SELECT * FROM monthly;
+
+  - id: p-sales-etl
+    title: Python ETL — CSV to clean, validated output
+    level: guided
+    tracks: [py, etl]
+    hours: 6
+    summary: Build a small but properly engineered Python ETL with pure functions, validation, quarantine, logging and tests.
+    skills: [file handling, csv, functions, exceptions, logging, testing, idempotent outputs]
+    topics: [py-files, py-functions, py-exceptions, py-logging, py-testing, etl-validation, def-idempotency]
+    brief: |
+      Turn `/data/orders.csv` + `/data/customers.csv` + `/data/messy_customers.csv` into clean outputs in `/out/`:
+      - `orders_clean.csv` — typed, validated, enriched with customer city & segment
+      - `rejects.csv` — rows that failed validation with a reason
+      - `daily_revenue.csv` — revenue per day (delivered orders)
+
+      Structure code as **extract → validate → transform → load** functions in `pipeline.py`, with tests in `test_pipeline.py`. Re-running must produce identical files (idempotent).
+    milestones:
+      - title: Extract
+        detail: Write `extract(path)` returning a list of dicts using `csv.DictReader`. Log the row count.
+      - title: Validate and quarantine
+        detail: |
+          `validate(rows)` → `(good, rejects)`: order_id int & unique, amount ≥ 0, status in the allowed set, customer exists. Each reject carries a `reason`.
+        hints: ["Return both lists — never silently drop rows.", "A set of seen ids detects duplicates in one pass."]
+      - title: Transform
+        detail: Enrich orders with city/segment via a dict lookup; compute daily revenue.
+        hints: ["Build {customer_id: customer} once — no nested loops."]
+      - title: Load atomically
+        detail: Write outputs to `/out/*.tmp` then `os.replace` — sorted, fixed column order.
+      - title: Tests
+        detail: |
+          In `test_pipeline.py` write tests for validate (duplicate, negative amount, unknown status) and transform. Run them by calling the test functions at the bottom of the file.
+      - title: Run twice
+        detail: Run the pipeline twice and prove the outputs are identical (compare file hashes with `hashlib`). Note the result in the log.
+    deliverables:
+      - pipeline.py with extract/validate/transform/load
+      - test_pipeline.py with at least 5 tests
+      - outputs in /out and a short README in the design doc
+    rubric:
+      - { id: correct, label: Correctness, desc: Outputs are right; rejects explained }
+      - { id: quality, label: Validation, desc: Bad data detected and quarantined, never silently dropped }
+      - { id: reliability, label: Idempotency & atomic writes, desc: Re-runs produce identical outputs; no partial files }
+      - { id: code, label: Code quality, desc: Small pure functions, clear names, logging }
+      - { id: tests, label: Tests, desc: Edge cases covered }
+    defence:
+      - Why separate validate from transform?
+      - What happens if the job crashes halfway through writing outputs?
+      - How would you scale this to 100 GB of files?
+      - Why quarantine instead of dropping bad rows?
+    starter:
+      pipeline.py: |
+        import csv, logging, os
+
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+        log = logging.getLogger("pipeline")
+
+        ALLOWED_STATUS = {"delivered", "shipped", "cancelled", "returned"}
+
+        def extract(path):
+            with open(path, newline="", encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            log.info("extracted %d rows from %s", len(rows), path)
+            return rows
+
+        def validate(rows, customer_ids):
+            good, rejects = [], []
+            # TODO
+            return good, rejects
+
+        if __name__ == "__main__":
+            orders = extract("/data/orders.csv")
+      test_pipeline.py: |
+        from pipeline import validate
+
+        def test_duplicate_is_rejected():
+            rows = [{"order_id": "1", "customer_id": "1", "status": "delivered", "amount": "5"},
+                    {"order_id": "1", "customer_id": "1", "status": "delivered", "amount": "5"}]
+            good, rejects = validate(rows, {1})
+            assert len(good) == 1 and len(rejects) == 1
+
+        test_duplicate_is_rejected()
+        print("tests passed")
+
+  - id: p-api-ingestion
+    title: Incremental API ingestion
+    level: independent
+    tracks: [py, etl]
+    hours: 8
+    summary: Design and build an incremental extractor for a paginated, rate-limited API with watermarks and raw landing.
+    skills: [APIs, pagination, retries, watermarks, JSON, idempotency, raw landing]
+    topics: [py-apis, py-json, py-exceptions, etl-incremental, def-idempotency, def-file-formats]
+    brief: |
+      A partner exposes `GET /orders?updated_since=…&cursor=…` (simulate it with the provided `FakeAPI` class: it paginates with cursors, randomly returns 429/503, and includes late updates). Build an extractor that:
+      - pulls only changes since the last successful watermark (with a lookback),
+      - follows cursors, retries transient errors with backoff, fails on others,
+      - lands **raw** JSON Lines per run in `/out/raw/ingest_date=…/run_id.jsonl`,
+      - produces a deduplicated **current state** file (latest version per order),
+      - persists state (watermark) only after success.
+
+      You design the structure. Requirements only — no step-by-step guidance.
+    milestones:
+      - title: Design doc first
+        detail: Describe the flow, the state you persist, failure handling and how reruns stay idempotent.
+      - title: Extractor with retries
+        detail: Pagination + retry/backoff + error classification.
+      - title: Raw landing & metadata
+        detail: JSONL per run with run metadata (run id, params, counts).
+      - title: Watermark & current state
+        detail: Lookback window, dedup latest per id, watermark committed after success.
+      - title: Failure drills
+        detail: Prove with tests that a failed run leaves the watermark unchanged and a rerun produces the same state.
+    deliverables:
+      - extractor code + tests
+      - design doc with failure analysis
+    rubric:
+      - { id: correct, label: Correctness, desc: No lost or duplicated records across runs }
+      - { id: reliability, label: Reliability, desc: Retries, error classification, watermark safety }
+      - { id: design, label: Design, desc: Clear separation of fetching, landing and state }
+      - { id: tests, label: Tests, desc: Failure scenarios tested }
+      - { id: docs, label: Documentation, desc: Design doc explains trade-offs }
+    defence:
+      - How do you guarantee no data loss if the job fails after fetching but before saving?
+      - Why a lookback window, and how big?
+      - How would you backfill one year?
+      - How would this run in Airflow / Cloud Run in production?
+    starter:
+      fake_api.py: |
+        import random
+
+        class FakeAPI:
+            """Simulated partner API: cursor pagination, transient errors, late updates."""
+            def __init__(self, n=250, seed=1):
+                rnd = random.Random(seed)
+                self.rows = [{"id": i, "status": rnd.choice(["new", "paid", "shipped"]), "amount": round(rnd.uniform(5, 500), 2),
+                              "updated_at": f"2025-06-{1 + i % 28:02d}T{rnd.randint(0, 23):02d}:00:00"} for i in range(1, n + 1)]
+                self.rnd = rnd
+            def get(self, updated_since, cursor=None, page_size=50):
+                if self.rnd.random() < 0.15:
+                    return {"status": self.rnd.choice([429, 503])}
+                data = sorted((r for r in self.rows if r["updated_at"] > updated_since), key=lambda r: (r["updated_at"], r["id"]))
+                start = int(cursor or 0)
+                page = data[start:start + page_size]
+                nxt = str(start + page_size) if start + page_size < len(data) else None
+                return {"status": 200, "data": page, "next_cursor": nxt}
+
+  - id: p-star-schema
+    title: Design and build a star schema
+    level: independent
+    tracks: [dw, sql]
+    hours: 8
+    summary: Model the shop data as a star schema with an SCD2 customer dimension and prove it answers business questions.
+    skills: [dimensional modelling, grain, surrogate keys, SCD2, data tests]
+    topics: [dw-facts-dimensions, dw-fact-types, dw-scd, dw-keys-conformed, sql-dml-merge, def-data-quality]
+    brief: |
+      Using the practice database, design and build (in `.sql` files run against the playground DB):
+      - `dim_date`, `dim_product`, `dim_customer` (**SCD Type 2** on city & segment, seeded from `customers` and updated from `stg_customers`),
+      - `fct_order_lines` at line grain with surrogate keys and measures,
+      - a set of tests (uniqueness, one current row per customer, referential integrity, revenue reconciliation with `orders`).
+      Then answer three business questions using only the star.
+    milestones:
+      - title: Bus matrix and grain
+        detail: In the design doc list processes × dimensions; declare the grain of each fact.
+      - title: Dimensions
+        detail: Build dim_date (recursive CTE), dim_product, dim_customer with surrogate keys and unknown members.
+      - title: SCD2 load
+        detail: Apply stg_customers changes as SCD2 versions.
+      - title: Fact table
+        detail: Build fct_order_lines with point-in-time customer keys.
+      - title: Tests
+        detail: Write zero-row tests and make them pass.
+      - title: Business questions
+        detail: Revenue by segment at time of sale vs current segment; top categories by month; repeat purchase rate.
+    deliverables:
+      - DDL/DML scripts and tests
+      - design doc with bus matrix, grain, SCD decisions
+    rubric:
+      - { id: model, label: Model design, desc: Correct grain, facts, dimensions, keys }
+      - { id: scd, label: SCD2, desc: History handled correctly and tested }
+      - { id: tests, label: Tests, desc: Integrity and reconciliation tests pass }
+      - { id: usability, label: Usability, desc: Business questions are easy to answer }
+    defence:
+      - Why this grain?
+      - Which attributes are SCD2 and why?
+      - How would you load this incrementally every day?
+      - How would this look in BigQuery — star or wide table?
+
+  - id: p-airflow-pipeline
+    title: Production-style orchestrated pipeline
+    level: production
+    tracks: [af, etl, bq]
+    hours: 10
+    summary: Write a production-grade Airflow DAG for a daily ELT with sensors, idempotent partition loads, quality gates, branching and alerting.
+    skills: [Airflow, scheduling, idempotency, data quality gates, retries, alerting, documentation]
+    topics: [af-dags, af-scheduling, af-xcom-taskflow, af-branching, af-production, etl-validation, etl-errors, bq-partition-cluster]
+    brief: |
+      Write `orders_daily.py` — a DAG for: wait for `gs://raw/orders/{{ ds }}/_SUCCESS` → load the day into `raw.orders$YYYYMMDD` (WRITE_TRUNCATE) → validate (row count vs 7-day average, unique ids) → branch: if validation fails, quarantine + alert; else run dbt models → publish → notify.
+
+      Requirements: catchup off, retries with backoff, execution timeouts, failure callback, SLA notes, no top-level work, interval-based templating everywhere, docs (`doc_md`). Use the Airflow emulator's `dag.test(fail={...})` to rehearse failures and show the graph.
+    milestones:
+      - title: Skeleton & scheduling
+        detail: DAG args, default_args, schedule, catchup, tags, owner, doc_md.
+      - title: Sensor and idempotent load
+        detail: GCS sensor (reschedule mode + timeout) and a load into the dated partition.
+      - title: Quality gate with branching
+        detail: Validation task + BranchPythonOperator + correct trigger rules for the join.
+      - title: Transform & publish
+        detail: dbt build via BashOperator; publish step; notification.
+      - title: Failure rehearsal
+        detail: |
+          Use `dag.test(fail={"load_raw": 1})` to show a retry succeeding, and a permanent failure triggering the alert path. Paste outputs in the log.
+      - title: Runbook
+        detail: |
+          In the design doc write a runbook — common failures, how to rerun a day, how to backfill a month.
+    deliverables:
+      - orders_daily.py
+      - design doc + runbook
+    rubric:
+      - { id: correct, label: Correct DAG, desc: Dependencies and trigger rules behave correctly }
+      - { id: reliability, label: Reliability, desc: Idempotent, retries, timeouts, alerts }
+      - { id: quality, label: Quality gates, desc: Bad data blocked and quarantined }
+      - { id: practices, label: Best practices, desc: No top-level work, templating, secrets via connections }
+      - { id: docs, label: Docs & runbook, desc: Someone else could operate it }
+    defence:
+      - Why does the 1 June run start on 2 June?
+      - How do you rerun one failed day safely?
+      - What happens to the dashboard if validation fails?
+      - How do you backfill a month without overloading BigQuery?
+    starter:
+      orders_daily.py: |
+        from datetime import datetime, timedelta
+        from airflow import DAG
+        from airflow.operators.python import PythonOperator, BranchPythonOperator
+        from airflow.operators.empty import EmptyOperator
+        from airflow.operators.bash import BashOperator
+        from airflow.sensors.filesystem import FileSensor
+
+        def notify_failure(context):
+            print("ALERT", context["task_instance"].task_id)
+
+        default_args = {"owner": "data-eng", "retries": 2, "retry_delay": timedelta(minutes=5), "on_failure_callback": notify_failure}
+
+        with DAG("orders_daily", start_date=datetime(2025, 1, 1), schedule="@daily", catchup=False,
+                 default_args=default_args, tags=["orders"]) as dag:
+            start = EmptyOperator(task_id="start")
+            # TODO: sensor, load_raw, validate, branch, quarantine, dbt_build, publish
+
+        dag.test()
+
+  - id: p-spark-batch
+    title: PySpark batch job with performance thinking
+    level: production
+    tracks: [spark, def]
+    hours: 10
+    summary: Build a PySpark job that cleans, deduplicates, joins and aggregates data, writes partitioned output idempotently, and explains its execution plan.
+    skills: [PySpark DataFrames, joins, windows, partitioning, broadcast, idempotent writes, explain plans]
+    topics: [spark-dataframes, spark-agg-joins, spark-partitions, spark-performance, spark-io, def-idempotency]
+    brief: |
+      Using the PySpark emulator and `/data` files, write `job.py` that:
+      1. reads orders, order_items, products, customers with explicit schemas,
+      2. deduplicates `messy_customers.csv` to the latest record per customer (window),
+      3. builds `fact_sales` (line grain) joined with products and customers (broadcast the small dimensions),
+      4. aggregates daily revenue by category and segment,
+      5. writes outputs partitioned by month with dynamic overwrite semantics (idempotent),
+      6. prints and annotates `explain()` output: where are the shuffles? which joins broadcast?
+
+      In the design doc, describe how the same job would be tuned on a real cluster for 2 TB/day.
+    milestones:
+      - title: Schemas and reading
+        detail: Explicit schemas; count rows; handle bad records.
+      - title: Dedup with windows
+        detail: Latest customer version per id with deterministic ordering.
+      - title: Joins and aggregation
+        detail: Broadcast dimensions; aggregate; verify totals against a pure-Python calculation.
+      - title: Partitioned, idempotent writes
+        detail: Write by month; rerun and prove the output is unchanged.
+      - title: Explain the plan
+        detail: Annotate the plan; identify shuffles; propose tuning for real scale (partitions, AQE, skew).
+    deliverables:
+      - job.py
+      - design doc with plan analysis and scaling notes
+    rubric:
+      - { id: correct, label: Correctness, desc: Totals reconcile; dedup deterministic }
+      - { id: perf, label: Performance thinking, desc: Broadcasts, fewer shuffles, partition sizing discussed }
+      - { id: reliability, label: Idempotent output, desc: Reruns don't duplicate }
+      - { id: code, label: Code quality, desc: Readable transformations, functions, no UDF misuse }
+    defence:
+      - Where does your job shuffle, and could you avoid any of those shuffles?
+      - Why broadcast the products table?
+      - How do you make the write idempotent?
+      - The job got 10× slower after data grew — how do you investigate?

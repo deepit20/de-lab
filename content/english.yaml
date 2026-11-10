@@ -1,0 +1,133 @@
+exercises:
+  - id: en-1
+    type: rewrite
+    prompt: Rewrite this status update so it is clear and professional.
+    text: "the job was failing since morning so i was checking it and some issue is there in source i think, will update"
+    model: "The orders pipeline has been failing since 6 a.m. The cause appears to be a change in the source file format. I'm confirming this with the source team and will share an update by 11 a.m."
+    explain: "Lead with the impact, state the probable cause with appropriate certainty, and give a concrete time for the next update."
+  - id: en-2
+    type: grammar
+    prompt: Choose the correct sentence.
+    choices:
+      - "I am working on this pipeline since two months."
+      - "I have been working on this pipeline for two months."
+      - "I am working in this pipeline from two months."
+      - "I worked on this pipeline since two months."
+    answer: 1
+    explain: "Use the present perfect continuous with 'for' + a duration for an action that started in the past and continues now."
+  - id: en-3
+    type: grammar
+    prompt: Choose the clearest request.
+    choices:
+      - "Can you please revert back by EOD?"
+      - "Could you please reply by the end of the day?"
+      - "Please do the needful and revert."
+      - "Kindly revert back me."
+    answer: 1
+    explain: "In international English 'revert' means 'return to a previous state'. Prefer 'reply' or 'get back to me', and avoid 'do the needful'."
+  - id: en-4
+    type: rewrite
+    prompt: Make this interview answer more confident and structured.
+    text: "So basically I think partitioning is like, it divides the table and maybe it helps in performance, I guess also cost."
+    model: "Partitioning divides a table into segments, usually by date. When a query filters on that column, BigQuery reads only the matching partitions, so the query is faster and cheaper because we pay for bytes scanned."
+    explain: "Remove fillers ('basically', 'like', 'I guess'), state facts directly and explain the mechanism."
+  - id: en-5
+    type: vocabulary
+    prompt: Choose the best way to disagree politely in a design discussion.
+    choices:
+      - "You are wrong, that will not work."
+      - "I see the benefit of that approach. One concern I have is the cost of streaming here — could we compare it with a daily batch?"
+      - "No, no, we should do batch."
+      - "That is a bad idea."
+    answer: 1
+    explain: "Acknowledge the idea, state the concern, and propose a comparison — it keeps the discussion collaborative."
+  - id: en-6
+    type: rewrite
+    prompt: Rewrite as a clear incident summary (what happened, impact, next steps).
+    text: "yesterday data was not coming in dashboard because some duplicate was there and test failed and we fixed it now its ok"
+    model: "Yesterday's sales dashboard was not refreshed because a uniqueness test detected duplicate orders from a retried load. We removed the duplicates, reloaded the affected day, and the dashboard was updated at 10:40. To prevent this, we are changing the load to an idempotent MERGE."
+    explain: "Incident summaries cover what happened and why, the impact (with times), what was done, and prevention."
+  - id: en-7
+    type: grammar
+    prompt: Choose the correct sentence.
+    choices:
+      - "The data are loaded in BigQuery every nights."
+      - "The data is loaded into BigQuery every night."
+      - "The data is loaded in to BigQuery every nights."
+      - "Data loading into BigQuery every night."
+    answer: 1
+    explain: "'Loaded into' expresses movement into a destination; 'every night' is singular. 'Data is' is standard in modern technical English."
+  - id: en-8
+    type: rewrite
+    prompt: Explain this to a non-technical manager in two sentences.
+    text: "We migrated the ETL to ELT using dbt on BigQuery with incremental models partitioned by date."
+    model: "We changed how our reports are built so the data is processed inside our data warehouse, using only each day's new data instead of recalculating everything. As a result, reports are ready earlier each morning and processing costs less."
+    explain: "Translate tools into outcomes the listener cares about: speed, cost, reliability."
+  - id: en-9
+    type: vocabulary
+    prompt: "Which word completes the sentence: 'We need to ___ the source totals with the warehouse totals.'"
+    choices: ["reconcile", "recollect", "recover", "reconsider"]
+    answer: 0
+    explain: "'Reconcile' means comparing two sets of figures to make sure they agree."
+  - id: en-10
+    type: rewrite
+    prompt: Turn this into a clear, polite question for the interviewer.
+    text: "what kind of data you people are having and how much"
+    model: "Could you tell me about the main data sources the team works with, and roughly what volumes you process each day?"
+    explain: "A polite opener, a clear structure, and 'roughly' invites an approximate answer."
+  - id: en-11
+    type: grammar
+    prompt: Choose the correct sentence.
+    choices:
+      - "I have did the testing yesterday."
+      - "I did the testing yesterday."
+      - "I have done the testing yesterday."
+      - "I done the testing yesterday."
+    answer: 1
+    explain: "With a finished time expression ('yesterday') use the simple past, not the present perfect."
+  - id: en-12
+    type: rewrite
+    prompt: Rewrite this email opening to be concise.
+    text: "Hope you are doing well. I am writing this mail to inform you that as per our discussion I have completed the task which you have given."
+    model: "As discussed, I've completed the customer deduplication task — details below."
+    explain: "Get to the point in the first line and name the task."
+  - id: en-13
+    type: grammar
+    prompt: Choose the correct sentence.
+    choices:
+      - "Each of the tables have a primary key."
+      - "Each of the tables has a primary key."
+      - "Each of the table have primary key."
+      - "Each tables has a primary key."
+    answer: 1
+    explain: "'Each' is singular, so the verb is 'has'."
+  - id: en-14
+    type: rewrite
+    prompt: Rewrite to sound decisive in a design review.
+    text: "Maybe we can try partitioning, if it is okay, otherwise also fine."
+    model: "I recommend partitioning the table by event date: most queries filter on the last 30 days, so it should cut scanned data by about 90%."
+    explain: "Make a recommendation, give the reason and the expected impact."
+phrasebook:
+  - title: Explaining your thinking
+    phrases:
+      - "Let me make sure I understand the requirement: …"
+      - "My first approach would be …, and then I'd optimise it by …"
+      - "The trade-off here is … versus …"
+      - "I'm not certain, but I'd reason about it like this: …"
+  - title: Status updates
+    phrases:
+      - "The pipeline has been back to normal since 10:40."
+      - "The root cause was …; we've fixed it by …"
+      - "I'll share the next update by 3 p.m."
+      - "There's a risk that … — to mitigate it, I suggest …"
+  - title: Meetings and collaboration
+    phrases:
+      - "Could you clarify what you mean by 'active customer'?"
+      - "I'd like to propose an alternative: …"
+      - "That's a good point. Building on that, …"
+      - "Can we agree on the definition before we build the dashboard?"
+  - title: Interview closing questions
+    phrases:
+      - "What does success look like in this role after six months?"
+      - "How does the team handle on-call and data incidents?"
+      - "What are the biggest data challenges the team is facing right now?"

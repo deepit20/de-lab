@@ -1,0 +1,43 @@
+type: behavioral
+track: int
+questions:
+  - id: bh-conflict
+    level: 2
+    q: "Tell me about a time you disagreed with a stakeholder or colleague about a data decision."
+    keyPoints: ["situation and the disagreement", "how you listened and understood their goal", "data or evidence you used", "the outcome", "relationship preserved", "learning"]
+  - id: bh-mistake
+    level: 2
+    q: "Tell me about a mistake you made at work and what you learned."
+    keyPoints: ["own the mistake honestly", "impact", "how you fixed it", "communication", "process change to prevent recurrence", "learning"]
+  - id: bh-deadline
+    level: 1
+    q: "Describe a time you had to deliver under a tight deadline."
+    keyPoints: ["context and constraint", "prioritisation", "communication of trade-offs", "result", "what you would do differently"]
+  - id: bh-learn-fast
+    level: 1
+    q: "Tell me about a time you had to learn a new technology quickly."
+    keyPoints: ["why it was needed", "how you learned (docs, practice, projects)", "how you applied it", "result", "how you keep learning"]
+  - id: bh-improve-process
+    level: 2
+    q: "Give an example of a process you improved or automated."
+    keyPoints: ["manual or inefficient starting point", "your solution and tools", "measurable impact time saved or errors reduced", "adoption by others"]
+  - id: bh-why-de
+    level: 1
+    q: "Why do you want to work in data engineering?"
+    keyPoints: ["experience with data problems as a consumer", "interest in building reliable systems", "steps already taken: courses, projects, tools learned", "how your current background is a strength", "long-term goal"]
+  - id: bh-ambiguity
+    level: 2
+    q: "Tell me about a time requirements were unclear. What did you do?"
+    keyPoints: ["clarifying questions", "prototype or example output", "documenting assumptions", "iterating with stakeholders", "result"]
+  - id: sd-design-ingestion
+    track: int
+    type: design
+    level: 3
+    q: "Design a system to ingest files dropped by 50 partners daily (CSV/JSON, varying schemas) into BigQuery."
+    keyPoints: ["landing bucket per partner with conventions", "event-driven or scheduled detection", "schema registry / contracts per partner", "validation and quarantine", "raw retention and replay", "idempotent loads by partner and date", "monitoring per partner SLA", "self-service onboarding"]
+  - id: sd-design-cdc
+    track: int
+    type: design
+    level: 3
+    q: "Design near-real-time replication of a Postgres OLTP database into BigQuery for analytics with full history."
+    keyPoints: ["log based CDC with Datastream or Debezium", "initial snapshot plus stream", "raw change log table", "merge latest state per key", "SCD2 or history from change log", "handle deletes and schema changes", "latency and cost trade-offs", "monitoring lag"]

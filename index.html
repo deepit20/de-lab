@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="DE Lab — personal Data Engineering learning workspace" />
+    <meta name="theme-color" content="#4f46e5" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>DE Lab</title>
+    <style>
+      /* instant first paint before CSS/JS load */
+      html, body { margin: 0; background: #f6f7fb; }
+      @media (prefers-color-scheme: dark) { html, body { background: #0f1117; } }
+      .boot { height: 100vh; display: grid; place-items: center; font: 600 15px "Segoe UI", system-ui, sans-serif; color: #7a8296; }
+    </style>
+  </head>
+  <body>
+    <div id="root"><div class="boot">DE Lab</div></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

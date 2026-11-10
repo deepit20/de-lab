@@ -1,0 +1,50 @@
+frameworks:
+  - id: dwhet
+    name: "Define → Why → How → Example → Trade-off"
+    when: Concept questions ("What is partitioning?", "Explain SCD Type 2").
+    steps:
+      - Define it in one sentence.
+      - Why it exists — the problem it solves.
+      - How it works — the mechanism, step by step.
+      - A concrete example, ideally from your own work.
+      - A trade-off or limitation — shows judgement.
+    example: |
+      **Q: What is idempotency?** — *Define:* an operation is idempotent if running it again leaves the same result. *Why:* pipelines get retried and rerun. *How:* parameterise by the logical date and overwrite that partition, or MERGE on keys. *Example:* my daily sales load overwrites `fct_sales$20250601`, so a retry can't duplicate rows. *Trade-off:* overwriting partitions rewrites the whole day, which costs more than appending.
+  - id: star
+    name: "STAR(L)"
+    when: Behavioural questions ("Tell me about a time…").
+    steps:
+      - Situation — brief context (1–2 sentences).
+      - Task — what you were responsible for.
+      - Action — what YOU did, specifically (most of the answer).
+      - Result — measurable outcome.
+      - Learning — what you'd do again or differently.
+  - id: prep
+    name: "PREP (Point → Reason → Example → Point)"
+    when: Opinions and recommendations ("Would you use Spark or BigQuery here?").
+    steps:
+      - Point — state your recommendation first.
+      - Reason — the main reason.
+      - Example — evidence or example.
+      - Point — restate the recommendation.
+    example: |
+      "I'd use BigQuery SQL here. The data is already in BigQuery and the logic is joins and aggregations, which BigQuery does well without managing clusters. For example, a similar 2 TB daily aggregation ran in 3 minutes as a scheduled dbt model. So: BigQuery first; Spark only if we needed complex non-SQL logic."
+  - id: coding-aloud
+    name: "Coding out loud"
+    when: Live SQL / Python rounds.
+    steps:
+      - Restate the problem and the expected output columns/grain.
+      - Ask about edge cases (NULLs, duplicates, ties, empty input).
+      - Describe the plan in steps before typing.
+      - Narrate while writing ("first I aggregate per customer…").
+      - Test with a small example and edge cases.
+      - Discuss complexity / performance.
+  - id: architecture
+    name: "Explaining an architecture"
+    when: Project defence and system design.
+    steps:
+      - One-sentence purpose (who uses it, for what decision).
+      - Walk left to right — sources, ingestion, storage, transformation, serving.
+      - Zoom into the hardest part.
+      - Reliability — quality checks, retries, monitoring.
+      - Trade-offs and what you'd change.

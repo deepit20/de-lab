@@ -1,0 +1,61 @@
+{
+  "name": "de-lab",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DE Lab — an open-source, local-first Data Engineering learning workspace: lessons, notes, SQL/Python practice, spaced revision, projects and interview prep.",
+  "license": "MIT",
+  "keywords": [
+    "data-engineering",
+    "learning",
+    "sql",
+    "python",
+    "pyspark",
+    "airflow",
+    "bigquery",
+    "spaced-repetition",
+    "interview-prep",
+    "local-first"
+  ],
+  "type": "module",
+  "scripts": {
+    "postinstall": "node scripts/postinstall.mjs",
+    "content": "node scripts/build-content.mjs",
+    "dev": "vite",
+    "build": "node scripts/build-content.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview --port 5178",
+    "package": "npm run build && node scripts/package.mjs",
+    "validate": "node scripts/build-content.mjs && node scripts/validate-content.mjs --python",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
+    "codemirror": "^6.0.2",
+    "dexie": "^4.4.7",
+    "dexie-react-hooks": "^1.1.7",
+    "marked": "^14.1.4",
+    "minisearch": "^7.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.15.2"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/sql.js": "^1.4.11",
+    "@vitejs/plugin-react": "^4.7.0",
+    "highlight.js": "^11.12.0",
+    "js-yaml": "^4.3.2",
+    "puppeteer-core": "^23.11.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5"
+  }
+}

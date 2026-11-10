@@ -1,0 +1,904 @@
+# DE Lab curriculum. Order of tracks = recommended roadmap order.
+# kind: code (assessed by writing/debugging code) | concept (understand + explain + apply) | design (modelling/architecture)
+# complexity: 1 basic, 2 intermediate, 3 advanced  — drives how much evidence "independent" requires.
+tracks:
+  - id: sql
+    title: SQL
+    short: SQL
+    color: "#2f7ff0"
+    icon: database
+    description: Query, shape and reason about data — the single most-used Data Engineering skill.
+    why: Every pipeline ends (and often starts) in SQL. Interviews test it in almost every round.
+    modules:
+      - id: sql-m1
+        title: Querying foundations
+        summary: Reading data precisely — filtering, sorting, NULL logic and core functions.
+        topics:
+          - id: sql-select-basics
+            title: SELECT, WHERE, ORDER BY & logical query order
+            kind: code
+            complexity: 1
+            minutes: 30
+            outline:
+              - Logical processing order FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT
+              - Filtering with comparison, IN, BETWEEN, LIKE
+              - Why a SELECT alias cannot be used in WHERE
+              - DISTINCT and sorting with NULLs
+          - id: sql-nulls
+            title: NULL logic & three-valued logic
+            kind: code
+            complexity: 1
+            minutes: 30
+            prereqs: [sql-select-basics]
+          - id: sql-functions
+            title: String, date & CASE expressions
+            kind: code
+            complexity: 1
+            minutes: 35
+            prereqs: [sql-select-basics]
+            outline:
+              - CASE WHEN for derived categories
+              - String functions UPPER, LOWER, TRIM, SUBSTR, REPLACE, || concatenation
+              - Date functions and truncation (SQLite date(), strftime; BigQuery DATE_TRUNC, EXTRACT)
+              - CAST and type conversion
+      - id: sql-m2
+        title: Aggregation
+        summary: Summarising data correctly — grain, GROUP BY, HAVING and conditional aggregation.
+        topics:
+          - id: sql-aggregation
+            title: GROUP BY, HAVING & aggregate functions
+            kind: code
+            complexity: 1
+            minutes: 40
+            prereqs: [sql-select-basics, sql-nulls]
+          - id: sql-conditional-agg
+            title: Conditional aggregation & pivoting
+            kind: code
+            complexity: 2
+            minutes: 30
+            prereqs: [sql-aggregation, sql-functions]
+            outline:
+              - SUM(CASE WHEN ... THEN 1 ELSE 0 END) to count by condition
+              - Pivot rows into columns with conditional aggregates
+              - COUNT(DISTINCT CASE ...) patterns
+              - Ratios and percentages — beware integer division
+      - id: sql-m3
+        title: Joins
+        summary: Combining tables without silently duplicating or losing rows.
+        topics:
+          - id: sql-joins
+            title: INNER, LEFT, RIGHT, FULL & CROSS joins
+            kind: code
+            complexity: 2
+            minutes: 45
+            prereqs: [sql-aggregation]
+          - id: sql-semi-anti-self
+            title: Self, semi & anti joins (EXISTS / NOT EXISTS)
+            kind: code
+            complexity: 2
+            minutes: 35
+            prereqs: [sql-joins]
+      - id: sql-m4
+        title: Subqueries & CTEs
+        summary: Structuring complex logic into readable, testable steps.
+        topics:
+          - id: sql-subqueries-ctes
+            title: Subqueries, correlated subqueries & CTEs
+            kind: code
+            complexity: 2
+            minutes: 40
+            prereqs: [sql-joins]
+          - id: sql-recursive-cte
+            title: Recursive CTEs (hierarchies & date spines)
+            kind: code
+            complexity: 3
+            minutes: 35
+            prereqs: [sql-subqueries-ctes]
+            outline:
+              - Anchor member + recursive member + termination condition
+              - Walking an employee → manager hierarchy
+              - Generating a date spine to fill gaps
+              - Guard against infinite recursion
+      - id: sql-m5
+        title: Window functions
+        summary: Row-level analytics without collapsing rows — ranking, deduplication, running totals.
+        topics:
+          - id: sql-window-ranking
+            title: ROW_NUMBER, RANK, DENSE_RANK & deduplication
+            kind: code
+            complexity: 2
+            minutes: 45
+            prereqs: [sql-aggregation, sql-subqueries-ctes]
+          - id: sql-window-analytics
+            title: LAG/LEAD, running totals & window frames
+            kind: code
+            complexity: 3
+            minutes: 45
+            prereqs: [sql-window-ranking]
+      - id: sql-m6
+        title: Changing data & schema design
+        summary: DML, MERGE/upserts, constraints and normalisation.
+        topics:
+          - id: sql-dml-merge
+            title: INSERT, UPDATE, DELETE & MERGE / upserts
+            kind: code
+            complexity: 2
+            minutes: 40
+            prereqs: [sql-joins]
+          - id: sql-ddl-normalization
+            title: DDL, keys, constraints & normalisation
+            kind: design
+            complexity: 2
+            minutes: 40
+            prereqs: [sql-joins]
+            outline:
+              - Primary keys, foreign keys, UNIQUE, NOT NULL, CHECK
+              - 1NF, 2NF, 3NF — removing repeating groups, partial and transitive dependencies
+              - When to denormalise (analytics) vs normalise (transactions)
+              - Choosing data types; DECIMAL for money
+      - id: sql-m7
+        title: Performance
+        summary: How databases execute queries and how to make them cheaper.
+        topics:
+          - id: sql-performance
+            title: Indexes, query plans & optimisation
+            kind: concept
+            complexity: 3
+            minutes: 45
+            prereqs: [sql-joins, sql-window-ranking]
+      - id: sql-m8
+        title: Interview patterns
+        summary: The recurring problem shapes in SQL interviews.
+        topics:
+          - id: sql-patterns
+            title: Top-N per group, gaps & islands, sessionisation, YoY
+            kind: code
+            complexity: 3
+            minutes: 60
+            prereqs: [sql-window-analytics, sql-conditional-agg]
+
+  - id: py
+    title: Python
+    short: Python
+    color: "#f0a020"
+    icon: code
+    description: Python for data engineering — clean data handling, files, APIs, errors and testable code.
+    why: Python glues pipelines together — Airflow DAGs, PySpark jobs, API ingestion and data quality checks are all Python.
+    modules:
+      - id: py-m1
+        title: Core language
+        summary: Types, strings and control flow — the vocabulary of every script.
+        topics:
+          - id: py-basics
+            title: Variables, types & operators
+            kind: code
+            complexity: 1
+            minutes: 25
+            outline:
+              - Dynamic typing; int, float, str, bool, None
+              - Mutability — which types can change in place
+              - Truthiness rules (empty containers, 0, None are falsy)
+              - "is vs == (identity vs equality)"
+          - id: py-strings
+            title: Strings & text cleaning
+            kind: code
+            complexity: 1
+            minutes: 30
+            prereqs: [py-basics]
+          - id: py-control-flow
+            title: Conditions, loops & iteration patterns
+            kind: code
+            complexity: 1
+            minutes: 30
+            prereqs: [py-basics]
+            outline:
+              - if / elif / else and guard clauses
+              - for over iterables, range, enumerate, zip
+              - break, continue and loop-else
+              - while loops and avoiding infinite loops
+      - id: py-m2
+        title: Data structures
+        summary: Choosing the right container is half of writing fast, clear code.
+        topics:
+          - id: py-lists-tuples
+            title: Lists & tuples
+            kind: code
+            complexity: 1
+            minutes: 30
+            prereqs: [py-control-flow]
+            outline:
+              - Indexing, slicing, append vs extend
+              - Sorting with sorted() and key functions
+              - Tuples as immutable records; unpacking
+              - Copy vs reference (shallow copy pitfalls)
+          - id: py-dicts-sets
+            title: Dictionaries & sets
+            kind: code
+            complexity: 1
+            minutes: 40
+            prereqs: [py-lists-tuples]
+          - id: py-comprehensions
+            title: Comprehensions
+            kind: code
+            complexity: 2
+            minutes: 30
+            prereqs: [py-dicts-sets]
+      - id: py-m3
+        title: Functions
+        summary: Reusable, testable units of logic.
+        topics:
+          - id: py-functions
+            title: Functions, arguments & scope
+            kind: code
+            complexity: 2
+            minutes: 45
+            prereqs: [py-control-flow, py-lists-tuples]
+          - id: py-functional
+            title: Lambdas, sorted keys, map/filter
+            kind: code
+            complexity: 2
+            minutes: 25
+            prereqs: [py-functions]
+            outline:
+              - Lambdas as small anonymous functions
+              - sorted(data, key=lambda r - r['amount'], reverse=True)
+              - map and filter vs comprehensions
+              - any(), all(), min/max with key
+          - id: py-generators
+            title: Iterators & generators
+            kind: code
+            complexity: 3
+            minutes: 40
+            prereqs: [py-functions, py-comprehensions]
+      - id: py-m4
+        title: Files & data formats
+        summary: Reading and writing the files pipelines move around.
+        topics:
+          - id: py-files
+            title: File handling & CSV
+            kind: code
+            complexity: 2
+            minutes: 45
+            prereqs: [py-functions, py-dicts-sets]
+          - id: py-json
+            title: JSON & nested data
+            kind: code
+            complexity: 2
+            minutes: 40
+            prereqs: [py-files]
+      - id: py-m5
+        title: Robust code
+        summary: Code that fails loudly, recovers gracefully and tells you what happened.
+        topics:
+          - id: py-exceptions
+            title: Exceptions & error handling
+            kind: code
+            complexity: 2
+            minutes: 40
+            prereqs: [py-functions]
+          - id: py-logging
+            title: Logging for pipelines
+            kind: code
+            complexity: 2
+            minutes: 25
+            prereqs: [py-exceptions]
+            outline:
+              - logging levels DEBUG, INFO, WARNING, ERROR, CRITICAL
+              - getLogger(__name__) and basicConfig formats
+              - logger.exception inside except blocks
+              - Why print() is not enough in production
+      - id: py-m6
+        title: Structuring code
+        summary: Classes, modules, environments.
+        topics:
+          - id: py-oop
+            title: Classes & dataclasses
+            kind: code
+            complexity: 2
+            minutes: 40
+            prereqs: [py-functions]
+            outline:
+              - Class, instance, __init__, methods, self
+              - "@dataclass for record-like objects"
+              - Composition over inheritance
+              - When a function is better than a class
+          - id: py-modules
+            title: Modules, packages & virtual environments
+            kind: concept
+            complexity: 1
+            minutes: 25
+            prereqs: [py-functions]
+            outline:
+              - import mechanics and if __name__ == "__main__"
+              - Project layout for a pipeline repo
+              - venv, pip, requirements.txt / pyproject.toml
+              - Pinning versions for reproducibility
+      - id: py-m7
+        title: Data processing
+        summary: Tabular transformations with pandas and dates.
+        topics:
+          - id: py-pandas
+            title: pandas essentials for data engineers
+            kind: code
+            complexity: 2
+            minutes: 60
+            prereqs: [py-files, py-dicts-sets]
+          - id: py-datetime
+            title: Dates, times & time zones
+            kind: code
+            complexity: 2
+            minutes: 30
+            prereqs: [py-basics]
+            outline:
+              - datetime, date, timedelta
+              - Parsing with strptime and formatting with strftime / isoformat
+              - Store UTC, convert at the edges; aware vs naive datetimes
+              - Partition dates and incremental windows
+      - id: py-m8
+        title: Engineering practice
+        summary: APIs, tests and clean code — what separates scripts from pipelines.
+        topics:
+          - id: py-apis
+            title: Calling APIs — pagination, retries & rate limits
+            kind: code
+            complexity: 3
+            minutes: 45
+            prereqs: [py-json, py-exceptions]
+          - id: py-testing
+            title: Testing with pytest
+            kind: code
+            complexity: 2
+            minutes: 35
+            prereqs: [py-functions, py-exceptions]
+            outline:
+              - Arrange–Act–Assert
+              - pytest functions, assert, fixtures, parametrize
+              - Testing transformations with small in-memory inputs
+              - What to test in a pipeline (edge cases, schema, nulls)
+
+  - id: def
+    title: Data Engineering Fundamentals
+    short: DE Fundamentals
+    color: "#18a37a"
+    icon: layers
+    description: The mental models behind every pipeline — systems, formats, processing models and data quality.
+    why: Tools change every few years; these fundamentals let you reason about any of them.
+    modules:
+      - id: def-m1
+        title: The role & the lifecycle
+        topics:
+          - id: def-role-lifecycle
+            title: What data engineers do & the data lifecycle
+            kind: concept
+            complexity: 1
+            minutes: 25
+            outline:
+              - Generation → ingestion → storage → transformation → serving
+              - DE vs data analyst vs data scientist vs analytics engineer
+              - Undercurrents — security, data management, orchestration, DataOps
+              - What "production" means — reliability, monitoring, ownership
+      - id: def-m2
+        title: Data systems
+        topics:
+          - id: def-oltp-olap
+            title: OLTP vs OLAP
+            kind: concept
+            complexity: 1
+            minutes: 30
+          - id: def-file-formats
+            title: File formats — CSV, JSON, Parquet, Avro, ORC
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [def-oltp-olap]
+          - id: def-lake-warehouse
+            title: Data lake, warehouse & lakehouse
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [def-file-formats]
+      - id: def-m3
+        title: Processing models
+        topics:
+          - id: def-batch-streaming
+            title: Batch vs streaming
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [def-role-lifecycle]
+          - id: def-distributed
+            title: Distributed processing basics — partitioning, shuffle, scaling
+            kind: concept
+            complexity: 3
+            minutes: 40
+            prereqs: [def-file-formats]
+            outline:
+              - Scale up vs scale out
+              - Partitioning data so work can run in parallel
+              - Shuffles move data across the network — the expensive step
+              - Data skew and stragglers
+      - id: def-m4
+        title: Reliability
+        topics:
+          - id: def-data-quality
+            title: Data quality dimensions & checks
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [def-role-lifecycle]
+          - id: def-idempotency
+            title: Idempotency, reruns & backfills
+            kind: concept
+            complexity: 3
+            minutes: 35
+            prereqs: [def-batch-streaming]
+      - id: def-m5
+        title: Governance & cloud
+        topics:
+          - id: def-governance
+            title: Governance, lineage, metadata & PII
+            kind: concept
+            complexity: 2
+            minutes: 30
+            prereqs: [def-data-quality]
+            outline:
+              - Data catalog and metadata
+              - Lineage — where a column came from and what breaks if it changes
+              - PII handling — masking, hashing, access control, retention
+              - Data contracts between producers and consumers
+          - id: def-cloud
+            title: Cloud fundamentals for data engineers
+            kind: concept
+            complexity: 1
+            minutes: 25
+            prereqs: [def-role-lifecycle]
+            outline:
+              - IaaS, PaaS, SaaS, serverless
+              - Object storage vs block storage vs databases
+              - Separation of storage and compute
+              - Paying for what you use — cost as an engineering metric
+
+  - id: dw
+    title: Data Warehousing
+    short: Warehousing
+    color: "#8a5cf6"
+    icon: warehouse
+    description: Modelling data for analytics — facts, dimensions, grain, SCDs and modern warehouse design.
+    why: Good models make every downstream query simpler, faster and trustworthy.
+    modules:
+      - id: dw-m1
+        title: Warehouse concepts
+        topics:
+          - id: dw-concepts
+            title: Why warehouses exist — Kimball vs Inmon
+            kind: concept
+            complexity: 1
+            minutes: 25
+            prereqs: [def-oltp-olap]
+            outline:
+              - Integrated, subject-oriented, time-variant, non-volatile
+              - Kimball (bottom-up dimensional marts) vs Inmon (top-down 3NF EDW)
+              - Data marts, staging and presentation layers
+              - Modern variant — ELT inside cloud warehouses
+      - id: dw-m2
+        title: Dimensional modelling
+        topics:
+          - id: dw-facts-dimensions
+            title: Facts, dimensions, grain & star schemas
+            kind: design
+            complexity: 2
+            minutes: 50
+            prereqs: [dw-concepts, sql-joins]
+          - id: dw-fact-types
+            title: Fact table types & measures
+            kind: design
+            complexity: 2
+            minutes: 30
+            prereqs: [dw-facts-dimensions]
+            outline:
+              - Transaction facts, periodic snapshots, accumulating snapshots
+              - Factless fact tables (events, coverage)
+              - Additive, semi-additive (balances) and non-additive (ratios) measures
+              - Choosing grain first, then measures and dimensions
+      - id: dw-m3
+        title: Slowly changing dimensions
+        topics:
+          - id: dw-scd
+            title: Slowly changing dimensions (Type 0–6)
+            kind: design
+            complexity: 3
+            minutes: 45
+            prereqs: [dw-facts-dimensions, sql-dml-merge]
+      - id: dw-m4
+        title: Modern warehouse design
+        topics:
+          - id: dw-keys-conformed
+            title: Surrogate keys, conformed dimensions & the bus matrix
+            kind: design
+            complexity: 2
+            minutes: 30
+            prereqs: [dw-facts-dimensions]
+            outline:
+              - Natural vs surrogate keys; why surrogates for history
+              - Unknown/late-arriving dimension members
+              - Conformed dimensions shared across facts
+              - Enterprise bus matrix — processes x dimensions
+          - id: dw-medallion
+            title: Layered architecture — staging, medallion & marts
+            kind: design
+            complexity: 2
+            minutes: 30
+            prereqs: [dw-facts-dimensions, def-lake-warehouse]
+            outline:
+              - Bronze (raw) → Silver (clean, conformed) → Gold (business-ready)
+              - Staging / intermediate / marts in dbt-style projects
+              - Wide denormalised tables vs star schemas in columnar warehouses
+              - Testing and documenting each layer
+
+  - id: bq
+    title: BigQuery & GCP
+    short: BigQuery/GCP
+    color: "#e8453c"
+    icon: cloud
+    description: Google Cloud's data stack — BigQuery internals, partitioning, cost control and the surrounding services.
+    why: You are already working with BigQuery; knowing its internals turns SQL skill into cost-efficient engineering.
+    modules:
+      - id: bq-m1
+        title: GCP foundations
+        topics:
+          - id: gcp-foundations
+            title: Projects, IAM, regions & Cloud Storage
+            kind: concept
+            complexity: 1
+            minutes: 30
+            prereqs: [def-cloud]
+            outline:
+              - Organisation → folders → projects → resources
+              - IAM — principals, roles, least privilege; service accounts for pipelines
+              - Regions vs multi-regions; data residency
+              - GCS buckets, storage classes and lifecycle rules
+      - id: bq-m2
+        title: BigQuery internals
+        topics:
+          - id: bq-architecture
+            title: BigQuery architecture — storage, compute, slots
+            kind: concept
+            complexity: 2
+            minutes: 40
+            prereqs: [def-file-formats, def-oltp-olap]
+          - id: bq-partition-cluster
+            title: Partitioning & clustering
+            kind: concept
+            complexity: 2
+            minutes: 40
+            prereqs: [bq-architecture]
+      - id: bq-m3
+        title: Cost & performance
+        topics:
+          - id: bq-cost
+            title: Cost control & query optimisation
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [bq-partition-cluster, sql-performance]
+      - id: bq-m4
+        title: BigQuery SQL features
+        topics:
+          - id: bq-nested
+            title: STRUCT, ARRAY & UNNEST (nested and repeated data)
+            kind: code
+            complexity: 3
+            minutes: 40
+            prereqs: [bq-architecture, sql-joins]
+          - id: bq-features
+            title: MERGE, scheduled queries, views & materialized views
+            kind: concept
+            complexity: 2
+            minutes: 30
+            prereqs: [bq-architecture, sql-dml-merge]
+            outline:
+              - Views vs materialized views vs tables
+              - Scheduled queries for simple ELT
+              - MERGE for upserts into partitioned tables
+              - Time travel and table snapshots for recovery
+      - id: bq-m5
+        title: GCP data services
+        topics:
+          - id: gcp-services
+            title: Pub/Sub, Dataflow, Dataproc, Composer & Cloud Functions
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [gcp-foundations, def-batch-streaming]
+            outline:
+              - Pub/Sub — managed messaging for streaming ingestion
+              - Dataflow — managed Apache Beam for batch and streaming
+              - Dataproc — managed Spark/Hadoop clusters
+              - Cloud Composer — managed Airflow; Cloud Functions/Run for event-driven glue
+
+  - id: etl
+    title: ETL / ELT
+    short: ETL/ELT
+    color: "#0ea5b7"
+    icon: flow
+    description: Designing pipelines that extract, load and transform data reliably and incrementally.
+    why: This is the day job. Interviews probe incremental loads, failures and data quality in depth.
+    modules:
+      - id: etl-m1
+        title: Pipeline patterns
+        topics:
+          - id: etl-vs-elt
+            title: ETL vs ELT & pipeline anatomy
+            kind: concept
+            complexity: 1
+            minutes: 30
+            prereqs: [def-lake-warehouse]
+          - id: etl-load-strategies
+            title: Load strategies — full, append, upsert, overwrite partition
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [etl-vs-elt, sql-dml-merge]
+            outline:
+              - Full refresh — simple, expensive, safe
+              - Append-only — fast, risks duplicates on rerun
+              - Upsert/MERGE on a business key
+              - Partition overwrite — idempotent reloads of a date slice
+      - id: etl-m2
+        title: Incremental data
+        topics:
+          - id: etl-incremental
+            title: Incremental loading with watermarks
+            kind: concept
+            complexity: 3
+            minutes: 45
+            prereqs: [etl-load-strategies, def-idempotency]
+          - id: etl-cdc
+            title: Change data capture (CDC)
+            kind: concept
+            complexity: 3
+            minutes: 35
+            prereqs: [etl-incremental]
+            outline:
+              - Query-based CDC (updated_at) vs log-based CDC (binlog/WAL)
+              - Capturing deletes — soft deletes, tombstones
+              - Applying change events in order with MERGE
+              - Tools — Debezium, Datastream
+      - id: etl-m3
+        title: Reliability
+        topics:
+          - id: etl-validation
+            title: Data validation & data contracts in pipelines
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [def-data-quality, etl-vs-elt]
+          - id: etl-errors
+            title: Error handling, retries & recovery
+            kind: concept
+            complexity: 3
+            minutes: 35
+            prereqs: [etl-incremental, py-exceptions]
+          - id: etl-dbt
+            title: Transformations as code — dbt concepts
+            kind: concept
+            complexity: 2
+            minutes: 30
+            prereqs: [etl-vs-elt, dw-medallion]
+            outline:
+              - Models are SELECT statements; dbt builds the DAG from ref()
+              - Materialisations — view, table, incremental, ephemeral
+              - Tests (unique, not_null, relationships) and documentation
+              - Sources, seeds, snapshots (SCD2)
+
+  - id: af
+    title: Apache Airflow
+    short: Airflow
+    color: "#017cee"
+    icon: dag
+    description: Orchestrating pipelines — DAGs, scheduling, dependencies, retries and production practices.
+    why: Airflow (and Cloud Composer) is the most common orchestrator in DE job descriptions.
+    modules:
+      - id: af-m1
+        title: Core concepts
+        topics:
+          - id: af-concepts
+            title: Airflow architecture & core concepts
+            kind: concept
+            complexity: 2
+            minutes: 35
+            prereqs: [py-functions, etl-vs-elt]
+          - id: af-dags
+            title: Writing DAGs — operators, tasks & dependencies
+            kind: code
+            complexity: 2
+            minutes: 45
+            prereqs: [af-concepts]
+      - id: af-m2
+        title: Scheduling
+        topics:
+          - id: af-scheduling
+            title: Schedules, data intervals, catchup & backfills
+            kind: concept
+            complexity: 3
+            minutes: 40
+            prereqs: [af-dags, def-idempotency]
+      - id: af-m3
+        title: Passing data & control flow
+        topics:
+          - id: af-xcom-taskflow
+            title: XCom & the TaskFlow API
+            kind: code
+            complexity: 2
+            minutes: 35
+            prereqs: [af-dags]
+          - id: af-branching
+            title: Branching, trigger rules & sensors
+            kind: code
+            complexity: 3
+            minutes: 35
+            prereqs: [af-dags]
+            outline:
+              - BranchPythonOperator / @task.branch returns task_ids to follow
+              - Trigger rules — all_success, all_done, one_failed, none_failed_min_one_success
+              - Sensors wait for a condition; poke vs reschedule mode; deferrable operators
+              - Avoiding skipped-task surprises after branches
+      - id: af-m4
+        title: Production Airflow
+        topics:
+          - id: af-production
+            title: Retries, SLAs, connections & best practices
+            kind: concept
+            complexity: 3
+            minutes: 40
+            prereqs: [af-scheduling, af-xcom-taskflow]
+          - id: af-composer
+            title: Cloud Composer & deployment
+            kind: concept
+            complexity: 2
+            minutes: 25
+            prereqs: [af-production, gcp-services]
+            outline:
+              - Composer = managed Airflow on GKE; DAGs live in a GCS bucket
+              - Environments, Airflow versions, PyPI packages
+              - Using service accounts and Secret Manager for connections
+              - CI/CD for DAGs — lint, import test, deploy
+
+  - id: spark
+    title: PySpark
+    short: PySpark
+    color: "#e25a1c"
+    icon: spark
+    description: Distributed data processing with Spark's DataFrame API — and why it behaves the way it does.
+    why: For data too large for one machine, Spark is the default; interviews focus on its execution model.
+    modules:
+      - id: spark-m1
+        title: Spark fundamentals
+        topics:
+          - id: spark-architecture
+            title: Spark architecture & lazy evaluation
+            kind: concept
+            complexity: 2
+            minutes: 40
+            prereqs: [def-distributed]
+          - id: spark-dataframes
+            title: DataFrame basics — read, select, filter, withColumn
+            kind: code
+            complexity: 2
+            minutes: 45
+            prereqs: [spark-architecture, py-functions]
+      - id: spark-m2
+        title: Transformations
+        topics:
+          - id: spark-agg-joins
+            title: Aggregations, joins & window functions
+            kind: code
+            complexity: 2
+            minutes: 50
+            prereqs: [spark-dataframes, sql-window-ranking]
+          - id: spark-sql
+            title: Spark SQL & temp views
+            kind: code
+            complexity: 1
+            minutes: 20
+            prereqs: [spark-dataframes]
+            outline:
+              - createOrReplaceTempView then spark.sql("...")
+              - Same Catalyst optimizer for SQL and DataFrame code
+              - Mixing SQL and DataFrame steps
+              - Catalog tables vs temp views
+      - id: spark-m3
+        title: Performance
+        topics:
+          - id: spark-partitions
+            title: Partitions, shuffles & narrow vs wide transformations
+            kind: concept
+            complexity: 3
+            minutes: 45
+            prereqs: [spark-agg-joins]
+          - id: spark-performance
+            title: Performance tuning — broadcast, caching, skew, AQE
+            kind: concept
+            complexity: 3
+            minutes: 45
+            prereqs: [spark-partitions]
+      - id: spark-m4
+        title: I/O & streaming
+        topics:
+          - id: spark-io
+            title: Reading & writing data — formats, partitionBy, modes
+            kind: code
+            complexity: 2
+            minutes: 30
+            prereqs: [spark-dataframes, def-file-formats]
+            outline:
+              - spark.read.format(...).option(...).load(...); schema vs inferSchema
+              - write.mode("overwrite"/"append").partitionBy("dt").parquet(...)
+              - Small-files problem and coalesce before write
+              - Dynamic partition overwrite for idempotent reloads
+          - id: spark-streaming
+            title: Structured Streaming essentials
+            kind: concept
+            complexity: 3
+            minutes: 35
+            prereqs: [spark-io, def-batch-streaming]
+            outline:
+              - Unbounded table model; micro-batches
+              - Triggers, output modes (append, update, complete)
+              - Watermarks for late data and state cleanup
+              - Checkpointing and exactly-once sinks
+
+  - id: proj
+    title: Data Engineering Projects
+    short: Projects
+    color: "#d9468f"
+    icon: rocket
+    description: Guided → independent → production-style builds that combine everything you have learned.
+    why: Projects are where knowledge becomes skill — and they are what you will defend in interviews.
+    modules:
+      - id: proj-m1
+        title: Guided projects
+        summary: Step-by-step builds with explanations.
+        projects: [p-sales-etl, p-sql-analytics]
+      - id: proj-m2
+        title: Independent projects
+        summary: Requirements given — design is yours.
+        projects: [p-api-ingestion, p-star-schema]
+      - id: proj-m3
+        title: Production-style projects
+        summary: Realistic constraints — orchestration, quality, recovery, docs.
+        projects: [p-airflow-pipeline, p-spark-batch]
+
+  - id: int
+    title: Interview Preparation
+    short: Interviews
+    color: "#5b6b7f"
+    icon: mic
+    description: Turning skill into interview performance — patterns, system design, project defence and communication.
+    why: Interviews reward structured thinking and clear explanation as much as raw knowledge.
+    modules:
+      - id: int-m1
+        title: Interview craft
+        topics:
+          - id: int-strategy
+            title: How DE interviews work & how to answer
+            kind: concept
+            complexity: 1
+            minutes: 25
+          - id: int-system-design
+            title: Data pipeline system design
+            kind: design
+            complexity: 3
+            minutes: 50
+            prereqs: [etl-incremental, af-concepts, bq-partition-cluster]
+          - id: int-project-story
+            title: Explaining your projects & behavioural answers
+            kind: concept
+            complexity: 2
+            minutes: 30
+            prereqs: [int-strategy]
+            outline:
+              - Context → problem → your actions → result → what you'd improve
+              - STAR for behavioural answers
+              - Prepare numbers — volumes, latency, cost, improvements
+              - Own your decisions and trade-offs; admit what you'd change

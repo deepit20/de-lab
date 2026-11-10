@@ -1,0 +1,130 @@
+type: scenario
+questions:
+  - id: sc-pipeline-failed-overnight
+    track: etl
+    level: 2
+    q: "Your nightly pipeline failed at 3 a.m. and the business dashboard refreshes at 8 a.m. Walk me through what you do."
+    keyPoints:
+      - "check logs and identify the failing task and error type"
+      - "distinguish transient vs data vs code failures"
+      - "retry or rerun idempotent tasks"
+      - "communicate expected delay to stakeholders"
+      - "avoid publishing partial or bad data"
+      - "root cause and prevention afterwards"
+    answer: |
+      Triage the failing task and error → classify (transient: rerun; data/contract: fix mapping or quarantine; bug: fix & test) → rerun only affected tasks for that interval (idempotent) → validate → publish → tell stakeholders if late → post-mortem with prevention (tests, alerts, contracts).
+    followUps: ["What if the fix takes longer than 8 a.m.?", "How would you prevent this class of failure?"]
+  - id: sc-duplicates-in-fact
+    track: etl
+    level: 2
+    q: "Duplicate records suddenly appeared in a fact table. How do you find the cause and fix it?"
+    keyPoints:
+      - "quantify duplicates by key and date"
+      - "check for retried non-idempotent appends"
+      - "check source resending data or overlapping extracts"
+      - "check join fan-out from code changes"
+      - "deduplicate and reload affected partitions"
+      - "make loads idempotent with merge or partition overwrite"
+      - "add uniqueness tests"
+  - id: sc-schema-change
+    track: etl
+    level: 2
+    q: "A source system renamed a column and added two new ones without telling you. What breaks, and how should a pipeline handle schema changes?"
+    keyPoints:
+      - "renamed column breaks loads or produces NULLs"
+      - "schema validation at ingestion detects changes"
+      - "additive changes tolerated, breaking changes fail fast"
+      - "keep raw payload for reprocessing"
+      - "data contracts and communication with producers"
+      - "schema evolution in formats like Avro or table formats"
+  - id: sc-slow-query
+    track: bq
+    level: 2
+    q: "A BigQuery query that powers a dashboard takes 4 minutes and scans 3 TB. How do you speed it up and reduce cost?"
+    keyPoints:
+      - "check execution details for expensive stages"
+      - "select only needed columns"
+      - "partition filter directly on partition column"
+      - "clustering on common filters"
+      - "pre-aggregate with materialized view or summary table"
+      - "fix joins fan-out or skew"
+      - "BI Engine or caching"
+  - id: sc-incremental-late-data
+    track: etl
+    level: 3
+    q: "Your incremental load uses updated_at as a watermark. Some records are being missed. Why, and how do you fix it?"
+    keyPoints:
+      - "late commits with earlier timestamps"
+      - "clock skew"
+      - "watermark advanced before load succeeded or set to job start time"
+      - "lookback window with idempotent merge"
+      - "CDC from transaction log"
+      - "reconciliation checks"
+  - id: sc-large-scale
+    track: spark
+    level: 3
+    q: "You need to join a 3 TB events table with a 50 GB users table daily in Spark and it keeps running out of memory. What do you do?"
+    keyPoints:
+      - "check Spark UI for skew and spill"
+      - "filter and project before join"
+      - "partition sizing and shuffle partitions"
+      - "handle skewed keys with salting or AQE"
+      - "broadcast only if small enough, otherwise sort merge"
+      - "increase executor memory or partitions"
+      - "pre-aggregate events"
+  - id: sc-pipeline-recovery
+    track: def
+    level: 3
+    q: "A bug corrupted three weeks of data in a production table. How do you recover?"
+    keyPoints:
+      - "stop the bug and freeze affected publishing"
+      - "identify exact affected range via lineage and logs"
+      - "restore from time travel or snapshots if within window"
+      - "otherwise reprocess from raw layer"
+      - "idempotent backfill of affected partitions"
+      - "rebuild downstream and communicate"
+      - "add tests to prevent recurrence"
+  - id: sc-data-quality-drop
+    track: def
+    level: 2
+    q: "Row counts in today's load are 40% lower than usual but no job failed. What do you do?"
+    keyPoints:
+      - "treat as potential incident"
+      - "check source volumes and extraction window"
+      - "check filters, joins and recent code changes"
+      - "check late or missing files"
+      - "hold publishing if critical"
+      - "add volume anomaly detection"
+  - id: sc-backfill
+    track: af
+    level: 2
+    q: "You must backfill a DAG for the last 6 months after fixing a bug. How do you do it safely?"
+    keyPoints:
+      - "confirm tasks are idempotent and interval based"
+      - "test on a few days first"
+      - "airflow dags backfill or clear runs"
+      - "limit max active runs to protect resources"
+      - "validate outputs per day"
+      - "rebuild downstream and communicate"
+  - id: sc-pii-request
+    track: def
+    level: 2
+    q: "A customer requests deletion of their personal data under privacy law. How do you handle it across your data platform?"
+    keyPoints:
+      - "locate data via catalog and lineage"
+      - "delete or anonymise in source-aligned and modelled layers"
+      - "raw and backups retention handling"
+      - "pseudonymous keys reduce scope"
+      - "audit trail of the deletion"
+      - "automate as a repeatable process"
+  - id: sc-dashboards-disagree
+    track: dw
+    level: 2
+    q: "Finance and Marketing dashboards show different revenue numbers for the same month. How do you resolve it?"
+    keyPoints:
+      - "compare metric definitions"
+      - "trace lineage of both numbers"
+      - "check filters statuses returns currency time zone"
+      - "check grain and double counting"
+      - "agree a single definition"
+      - "central semantic layer or conformed metrics"
