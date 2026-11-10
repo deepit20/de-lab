@@ -9,15 +9,15 @@
 Lessons · real SQL & Python in your browser · PySpark & Airflow emulators · spaced revision · projects · interview prep<br>
 **No account. No server. No tracking. Works offline.**
 
-[![Live demo](https://img.shields.io/badge/▶_Live_demo-try_it_now-4f46e5?style=for-the-badge)](https://YOUR_GITHUB_USERNAME.github.io/de-lab/?demo=1)
-[![Download for Windows](https://img.shields.io/badge/⬇_Windows-no_install-0f9d6b?style=for-the-badge)](https://github.com/YOUR_GITHUB_USERNAME/de-lab/releases/latest)
+[![Live demo](https://img.shields.io/badge/▶_Live_demo-try_it_now-4f46e5?style=for-the-badge)](https://deepit20.github.io/de-lab/?demo=1)
+[![Download for Windows](https://img.shields.io/badge/⬇_Windows-no_install-0f9d6b?style=for-the-badge)](https://github.com/deepit20/de-lab/releases/latest)
 
-[![CI](https://github.com/YOUR_GITHUB_USERNAME/de-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/de-lab/actions/workflows/ci.yml)
+[![CI](https://github.com/deepit20/de-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/deepit20/de-lab/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Stars](https://img.shields.io/github/stars/YOUR_GITHUB_USERNAME/de-lab?style=social)](https://github.com/YOUR_GITHUB_USERNAME/de-lab/stargazers)
+[![Stars](https://img.shields.io/github/stars/deepit20/de-lab?style=social)](https://github.com/deepit20/de-lab/stargazers)
 
-**[Live demo](https://YOUR_GITHUB_USERNAME.github.io/de-lab/?demo=1)** · **[Features](#-features)** · **[Quick start](#-quick-start)** · **[Curriculum](#-curriculum)** · **[Contribute](#-contributing)**
+**[Live demo](https://deepit20.github.io/de-lab/?demo=1)** · **[Features](#-features)** · **[Quick start](#-quick-start)** · **[Curriculum](#-curriculum)** · **[Contribute](#-contributing)**
 
 </div>
 
@@ -70,8 +70,8 @@ If DE Lab helps you learn, please **⭐ star the repo** — it's the best way to
 
 | Option | How | Best for |
 |---|---|---|
-| **Try it** | Open the **[live demo](https://YOUR_GITHUB_USERNAME.github.io/de-lab/?demo=1)** (sample progress) or **[start fresh](https://YOUR_GITHUB_USERNAME.github.io/de-lab/)** — install it from the address bar to use offline. | Everyone |
-| **Windows, no install** | Download `DE-Lab.zip` from **[Releases](https://github.com/YOUR_GITHUB_USERNAME/de-lab/releases/latest)** → Extract → double-click `Start DE Lab.bat`. | Learners on Windows |
+| **Try it** | Open the **[live demo](https://deepit20.github.io/de-lab/?demo=1)** (sample progress) or **[start fresh](https://deepit20.github.io/de-lab/)** — install it from the address bar to use offline. | Everyone |
+| **Windows, no install** | Download `DE-Lab.zip` from **[Releases](https://github.com/deepit20/de-lab/releases/latest)** → Extract → double-click `Start DE Lab.bat`. | Learners on Windows |
 | **From source** | `git clone … && cd de-lab && npm install && npm run dev` → http://localhost:5178 | Contributors |
 
 Setup asks only your name — everything else is optional and skippable.
@@ -119,7 +119,7 @@ flowchart LR
 - [ ] Translations of the interface and notes
 - [ ] Shareable progress cards & optional encrypted sync
 
-Have an idea? [Open an issue](https://github.com/YOUR_GITHUB_USERNAME/de-lab/issues/new/choose) or start a discussion.
+Have an idea? [Open an issue](https://github.com/deepit20/de-lab/issues/new/choose) or start a discussion.
 
 ## 🤝 Contributing
 
@@ -144,7 +144,7 @@ If DE Lab helped you learn something, land an interview or a job:
 - Share it with someone learning data engineering
 - Contribute a lesson or exercise
 
-[![Star History Chart](https://api.star-history.com/svg?repos=YOUR_GITHUB_USERNAME/de-lab&type=Date)](https://star-history.com/#YOUR_GITHUB_USERNAME/de-lab&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=deepit20/de-lab&type=Date)](https://star-history.com/#deepit20/de-lab&Date)
 
 ## 📄 License
 
