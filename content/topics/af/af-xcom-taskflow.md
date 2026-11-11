@@ -1,3 +1,90 @@
+=== lesson
+--- step concept: Tasks don't share memory
+Each Airflow task may run on a different worker, in a different process, at a different time. A Python variable set in one task **doesn't exist** in the next. To pass small values between tasks Airflow has **XCom** ("cross-communication") — values stored in the metadata database.
+
+```python
+def extract(ti):
+    ti.xcom_push(key="row_count", value=120)
+
+def report(ti):
+    n = ti.xcom_pull(task_ids="extract", key="row_count")
+```
+A `PythonOperator`'s **return value** is pushed automatically under the key `return_value`.
+
+--- step concept: The TaskFlow API
+TaskFlow turns plain functions into tasks and passes return values through XCom for you:
+
+```python
+from airflow.decorators import dag, task
+
+@dag(schedule="@daily", start_date=datetime(2025, 1, 1), catchup=False)
+def orders_tf():
+    @task
+    def extract():
+        return {"rows": 120, "path": "gs://raw/orders.json"}
+
+    @task
+    def load(meta):
+        print(f"loading {meta['rows']} rows from {meta['path']}")
+
+    load(extract())     # dependency + data passing in one line
+
+orders_tf()
+```
+[[quiz:af-xcom-taskflow:q0]]
+
+--- step practice: TaskFlow pipeline with XCom
+[[exercise:af-xcom-taskflow-1]]
+
+--- step concept: Pass references, not data
+XCom is stored in the Airflow database — it's for **small** things: a row count, a file path, a date, a status. Pass `gs://bucket/path` and let the next task read the file; never push a DataFrame or 100,000 rows.
+
+[[quiz:af-xcom-taskflow:q1]]
+
+--- step check: Mixing styles
+[[quiz:af-xcom-taskflow:q2]]
+
+--- step interview: Explain it
+[[recall:af-xcom-taskflow:r0]]
+
+=== detailed
+## XCom basics
+| Concept | Detail |
+|---|---|
+| storage | Airflow metadata DB (or a custom XCom backend, e.g. GCS) |
+| key | default `return_value`; custom keys via `xcom_push(key=...)` |
+| scope | per DAG run, per task (and map index) |
+| push | `ti.xcom_push(key, value)` or `return value` |
+| pull | `ti.xcom_pull(task_ids="t", key="k")` |
+| templating | `{{ ti.xcom_pull(task_ids='extract') }}` inside operator fields |
+| values | must be serializable (JSON by default) |
+
+## TaskFlow API
+- `@dag` and `@task` decorators; calling a task function inside the DAG returns an **XComArg** (a placeholder), not the real value.
+- `load(extract())` creates the dependency `extract >> load` and passes the value at run time.
+- `@task(multiple_outputs=True)` lets downstream tasks use `result["rows"]` as separate XComs.
+- Works with traditional operators: `extract() >> BigQueryInsertJobOperator(...)`, or pass `XComArg(op)` / `op.output` into a task.
+- `@task.branch`, `@task.sensor`, `@task.virtualenv`, `@task.kubernetes` variants exist.
+
+## Dynamic task mapping
+```python
+@task
+def list_files(): return ["a.csv", "b.csv", "c.csv"]
+
+@task
+def load(path): ...
+
+load.expand(path=list_files())   # one task instance per file, created at run time
+```
+
+## Size and design rules
+- Keep XComs to **KB**, not MB. Big payloads slow the database and the UI.
+- Pass **pointers** (GCS paths, table names, partition dates).
+- Make tasks idempotent: reading the same pointer on retry gives the same result.
+- Don't use XCom as a general state store between DAG runs — use a table.
+
+> [!MISTAKE] Inside the DAG body, `meta = extract(); print(meta["rows"])` doesn't print 120 — at parse time `meta` is only a reference. Use it inside another task.
+
 === crisp
 **XCom** ("cross-communication") passes **small** values between tasks via the metadata DB.
 ```python
@@ -40,6 +127,23 @@ quiz:
   - q: "In TaskFlow, `load(extract())` means…"
     options: ["load runs before extract", "extract runs, its return value is passed to load, which runs after", "both run in parallel", "extract runs twice"]
     answer: 1
+  - q: "What should a task push to XCom after writing a 2 GB file?"
+    options: ["the file contents", "a pandas DataFrame", "nothing — XCom cannot hold strings", "the GCS path of the file"]
+    answer: 3
+    explain: "XCom lives in the metadata DB; pass small references and let the next task read the data."
+  - q: "Inside the `@dag` function body, `meta = extract()` gives you…"
+    options: ["None", "a string", "an XComArg reference resolved at run time", "the real dictionary returned by extract"]
+    answer: 2
+    explain: "DAG code runs at parse time; the value only exists when the task runs."
+recall:
+  - q: "Explain XCom and the TaskFlow API and what you should and shouldn't pass between tasks."
+    keyPoints:
+      - "tasks run in separate processes and workers"
+      - "XCom stored in the metadata database"
+      - "return value pushed as return_value"
+      - "TaskFlow: load(extract()) sets dependency and passes data"
+      - "pass small references like paths, not data"
+      - "dynamic task mapping with expand"
 exercises:
   - id: af-xcom-taskflow-1
     lang: python

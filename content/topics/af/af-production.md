@@ -1,3 +1,79 @@
+=== lesson
+--- step concept: default_args set the safety net
+`default_args` apply to every task in a DAG:
+
+```python
+default_args = {
+    "owner": "data-eng",
+    "retries": 3,
+    "retry_delay": timedelta(minutes=5),
+    "retry_exponential_backoff": True,
+    "on_failure_callback": alert,
+    "execution_timeout": timedelta(hours=1),
+}
+```
+Retries handle transient errors; the callback tells a human only when retries are exhausted; the timeout stops a hung task.
+
+[[quiz:af-production:q0]]
+
+--- step practice: Production-ready default_args
+[[exercise:af-production-1]]
+
+--- step concept: Connections and secrets
+Never put passwords or keys in DAG code. Airflow **Connections** store host, login and secrets by id (`conn_id="orders_db"`) and hooks/operators look them up. In production, back them with a **secrets backend** such as Google Secret Manager.
+
+[[quiz:af-production:q1]]
+
+--- step concept: Idempotent, atomic tasks
+- Use the run's `data_interval_start/end` (or `{{ ds }}`), never `datetime.now()`.
+- Overwrite partitions or MERGE — never blind appends.
+- One task = one logical step that can be retried on its own.
+- Keep top-level DAG code light — the scheduler parses files constantly.
+
+--- step check: SLAs and monitoring
+[[quiz:af-production:q2]]
+
+--- step interview: Explain it
+[[recall:af-production:r0]]
+
+=== detailed
+## Reliability settings
+| Setting | Purpose |
+|---|---|
+| `retries`, `retry_delay`, `retry_exponential_backoff`, `max_retry_delay` | recover from transient errors |
+| `execution_timeout` | kill hung tasks |
+| `dagrun_timeout` | cap a whole run |
+| `on_failure_callback` / `on_retry_callback` / `on_success_callback` | alerts and hooks |
+| `max_active_runs` | limit concurrent runs (important for backfills) |
+| `max_active_tasks`, pools | protect source systems and quotas |
+| `depends_on_past` | run only if the previous run of this task succeeded |
+| `catchup` | whether to create runs for missed past intervals |
+
+## SLAs and freshness
+- Airflow 2's `sla=` on tasks flagged tasks finishing late; it was removed in Airflow 3, where newer releases offer deadline alerts instead.
+- Better: a **freshness check** task or monitoring query that alerts if the target table isn't updated by its deadline, plus dashboards on task duration.
+
+## Connections, variables, secrets
+- Connections hold credentials; Variables hold config (use sparingly — each `Variable.get` at top level hits the DB on every parse).
+- Secrets backend (Secret Manager, Vault) keeps secrets out of the metadata DB.
+- On GCP prefer **service accounts** over stored keys.
+
+## Best practices checklist
+- **Idempotent** tasks using templated dates.
+- **Atomic** writes (stage then swap/merge).
+- Light DAG files: no heavy imports or API calls at top level.
+- Push work to the right engine (BigQuery, Dataflow) — Airflow orchestrates.
+- Pin provider package versions; test DAG imports in CI.
+- Meaningful task ids, `owner`, `tags`, `doc_md`.
+- Use pools for rate-limited systems.
+- Alert once on final failure with context (DAG, task, date, log link).
+
+## Backfills and catchup
+- `catchup=False` for most DAGs; run backfills deliberately: `airflow dags backfill -s 2025-03-01 -e 2025-03-07 orders`.
+- Idempotent tasks make backfills safe; `max_active_runs` keeps them from overwhelming the warehouse.
+
+> [!REAL] Interviewers ask "how do you make an Airflow DAG production-ready?" — retries with backoff, timeouts, alerts, idempotent tasks with templated dates, secrets in a backend, CI import tests, and monitoring of freshness and duration.
+
 === crisp
 **Reliability settings**
 - `retries`, `retry_delay`, `retry_exponential_backoff=True`, `max_retry_delay` — for transient failures.
@@ -37,6 +113,23 @@ quiz:
   - q: "A task calling a flaky API should have…"
     options: ["retries=0", "retries with exponential backoff and an execution_timeout", "depends_on_past=True", "catchup=True"]
     answer: 1
+  - q: "Where should a DAG get its database password?"
+    options: ["from XCom", "from an Airflow Connection backed by a secrets manager", "hard-coded in the DAG file", "from a comment in the code"]
+    answer: 1
+    explain: "Connections and secrets backends keep credentials out of code and Git."
+  - q: "Which setting stops a stuck task from running forever?"
+    options: ["execution_timeout", "retries", "catchup", "owner"]
+    answer: 0
+    explain: "execution_timeout fails the task when it runs longer than the limit, so retries and alerts can kick in."
+recall:
+  - q: "How do you make an Airflow DAG production-ready?"
+    keyPoints:
+      - "retries with delay and exponential backoff"
+      - "execution_timeout and failure callbacks for alerts"
+      - "idempotent tasks with templated dates"
+      - "connections and secrets backend, no hard-coded credentials"
+      - "light DAG files, push work to engines"
+      - "pools, max_active_runs, CI import tests, freshness monitoring"
 exercises:
   - id: af-production-1
     lang: python

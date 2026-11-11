@@ -1,3 +1,81 @@
+=== lesson
+--- step concept: What you pay for
+BigQuery bills **storage** and **compute** separately.
+- **On-demand compute:** price per TB of **bytes scanned** by each query.
+- **Capacity (editions):** you buy **slots** (units of compute) per hour; queries share them.
+
+Because storage is columnar, bytes scanned = **only the columns you select**, in **only the partitions you read**.
+
+> [!THINK] A 2 TB table has 40 columns. Roughly how much does `SELECT order_id, amount` scan compared with `SELECT *`?
+
+--- step concept: The biggest levers
+1. **Select only needed columns** — never `SELECT *` on big tables.
+2. **Partition** by date and **filter on the partition column** — pruning skips whole partitions.
+3. **Cluster** on common filter/join columns — skips blocks inside partitions.
+4. **Pre-aggregate** with summary tables or materialized views for repeated dashboards.
+5. **Require partition filters** on huge tables so nobody scans everything by accident.
+
+[[quiz:bq-cost:q0]]
+
+--- step example: Look before you run
+- The editor's **dry run** shows "This query will process 1.2 TB".
+- `LIMIT 10` does **not** reduce bytes scanned on a normal table — use the **table preview** instead.
+- Set **maximum bytes billed** on scheduled jobs so a bad query fails instead of costing thousands.
+
+[[quiz:bq-cost:q1]]
+
+--- step scenario: Find and fix the expensive queries
+`INFORMATION_SCHEMA.JOBS` records every query with its `total_bytes_billed` and user.
+
+[[exercise:bq-cost-1]]
+
+--- step check: Storage costs too
+[[quiz:bq-cost:q2]]
+
+--- step interview: Explain it
+[[recall:bq-cost:r0]]
+
+=== detailed
+## Pricing model
+| Part | Billed by | Notes |
+|---|---|---|
+| On-demand queries | TB scanned (min 10 MB per table) | first TB per month free |
+| Capacity (Standard/Enterprise editions) | slot-hours | autoscaling or baseline commitments; predictable cost |
+| Active storage | GB-month | tables/partitions modified in last 90 days |
+| Long-term storage | ~half price | untouched for 90 days — automatic |
+| Streaming inserts / Storage Write API | GB ingested | batch loads from GCS are free |
+
+## Reduce bytes scanned
+- **Column pruning:** list columns; `SELECT * EXCEPT(big_json)` when you need almost everything.
+- **Partition pruning:** `WHERE event_date BETWEEN '2025-03-01' AND '2025-03-07'`. Filters must be on the partition column directly — wrapping it in a function or comparing to a subquery can prevent pruning.
+- **Clustering:** order data within partitions by up to 4 columns; filters on them skip blocks. The dry-run estimate is an upper bound; actual bytes may be lower.
+- **Materialized views / summary tables** for dashboards that hit the same aggregate repeatedly.
+- **BI Engine** caches data in memory for dashboards.
+- **Query cache:** identical repeated queries within 24 h are free (unless the table changed).
+
+## Guardrails
+- `require_partition_filter = TRUE` on large partitioned tables.
+- **Maximum bytes billed** per query/job.
+- Custom **quotas** per user/project per day.
+- **Budgets and alerts** in Cloud Billing; labels on jobs for cost attribution.
+
+## Find expensive queries
+```sql
+SELECT user_email, query, total_bytes_billed / POW(1024, 4) AS tb_billed
+FROM `region-asia-south1`.INFORMATION_SCHEMA.JOBS
+WHERE creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY)
+  AND job_type = 'QUERY'
+ORDER BY total_bytes_billed DESC
+LIMIT 10;
+```
+
+## Storage optimisation
+- Partition expiration for data you only need for N days.
+- Table expiration for temporary/scratch datasets.
+- Long-term pricing applies automatically — don't rewrite old partitions needlessly (it resets the 90-day clock).
+
+> [!MISTAKE] `SELECT * FROM big_table LIMIT 10` still scans the whole table on-demand.
+
 === crisp
 **Reduce bytes scanned (on-demand):**
 1. Select only needed columns — never `SELECT *` on wide tables (use `SELECT * EXCEPT(...)` if needed).
@@ -34,6 +112,23 @@ quiz:
   - q: "Which does NOT reduce on-demand bytes billed?"
     options: ["Selecting fewer columns", "Partition filter", "Adding LIMIT 10", "Clustering + filter on cluster column"]
     answer: 2
+  - q: "A query filters `WHERE DATE(event_ts) = '2025-03-14'` on a table partitioned by `event_date`. Problem?"
+    options: ["it scans only one column", "it filters on a different column, so no partitions are pruned", "nothing — it is optimal", "DATE() is not allowed"]
+    answer: 1
+    explain: "Pruning needs a filter on the partitioning column itself: WHERE event_date = '2025-03-14'."
+  - q: "Partitions that haven't been modified for 90 days are…"
+    options: ["billed at the cheaper long-term storage rate automatically", "deleted", "moved to Coldline", "billed double"]
+    answer: 0
+    explain: "Long-term storage pricing kicks in automatically; nothing changes about how you query it."
+recall:
+  - q: "How is BigQuery billed and how would you cut a team's query costs?"
+    keyPoints:
+      - "on-demand bytes scanned vs capacity slots"
+      - "columnar: select only needed columns"
+      - "partition pruning and clustering"
+      - "LIMIT does not reduce bytes"
+      - "materialized views or summary tables"
+      - "max bytes billed, require partition filter, INFORMATION_SCHEMA.JOBS"
 exercises:
   - id: bq-cost-1
     lang: text

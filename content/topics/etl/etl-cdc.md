@@ -1,3 +1,75 @@
+=== lesson
+--- step concept: Copy only what changed
+Copying a 50-million-row table every night to find the 20,000 rows that changed is slow and expensive. **Change data capture (CDC)** extracts just the inserts, updates and deletes.
+
+--- step concept: Query-based vs log-based
+- **Query-based:** `SELECT * FROM orders WHERE updated_at > :last_watermark`. Easy, but misses **hard deletes**, depends on `updated_at` always being set, and puts load on the source.
+- **Log-based:** read the database's transaction log (MySQL binlog, Postgres WAL) with tools like **Debezium** or **Datastream**. Captures every change, including deletes, with low impact on the source.
+
+[[quiz:etl-cdc:q0]]
+
+--- step concept: Change events
+Log-based CDC produces events like:
+
+| lsn | op | customer_id | city |
+|---|---|---|---|
+| 101 | c | 7 | Pune |
+| 105 | u | 7 | Mumbai |
+| 110 | d | 7 | NULL |
+
+`lsn` (log sequence number) gives the **order**. To apply a batch you keep only the **latest event per key**, then insert/update/delete.
+
+[[quiz:etl-cdc:q1]]
+
+--- step practice: Compact a CDC batch
+[[exercise:etl-cdc-1]]
+
+--- step check: Applying in order
+[[quiz:etl-cdc:q2]]
+
+--- step interview: Explain it
+[[recall:etl-cdc:r0]]
+
+=== detailed
+## Approaches
+| | Query-based (timestamp/watermark) | Log-based |
+|---|---|---|
+| How | poll with `WHERE updated_at > watermark` | read transaction log |
+| Deletes | missed (unless soft deletes) | captured |
+| Intermediate changes | only the latest state at poll time | every change |
+| Source load | queries on the source | minimal |
+| Setup | simple | needs log access, connector |
+| Tools | Airflow + SQL | Debezium + Kafka, Datastream, Fivetran |
+
+A third option, **snapshot diff** (compare full extracts), works for sources with no timestamps or logs but is expensive.
+
+## Watermarks
+- Store the max `updated_at` processed; next run starts from it.
+- Use `>=` with deduplication or a small overlap to avoid missing rows committed late with the same timestamp.
+- Watermarks on a source clock can go backwards (clock skew, backdated updates) — overlap protects you.
+
+## Deletes
+- **Soft delete:** source sets `is_deleted = true` → captured by query-based CDC as an update.
+- **Hard delete:** row disappears → only log-based CDC sees it, as a `d` event (often followed by a Kafka **tombstone** with a null value).
+- Warehouse options: physically delete, or keep the row with `_deleted_at` for history.
+
+## Applying changes
+1. Land raw events (append-only, bronze).
+2. **Compact**: latest event per key by `lsn`/commit timestamp — `ROW_NUMBER() OVER (PARTITION BY key ORDER BY lsn DESC) = 1`.
+3. **MERGE** into the target:
+```sql
+MERGE dim_customer T USING latest S ON T.customer_id = S.customer_id
+WHEN MATCHED AND S.op = 'd' THEN DELETE
+WHEN MATCHED THEN UPDATE SET city = S.city
+WHEN NOT MATCHED AND S.op != 'd' THEN INSERT (customer_id, city) VALUES (S.customer_id, S.city);
+```
+Ordering must use the **log position**, not arrival time — events can arrive out of order.
+
+## GCP
+**Datastream** reads MySQL/Postgres/Oracle/SQL Server logs and writes to BigQuery (with automatic merge) or GCS.
+
+> [!REAL] CDC feeds also give you history for free: keep all events in bronze and you can build SCD Type 2 dimensions from them.
+
 === crisp
 **Change Data Capture** = capturing every insert/update/delete in a source database and applying it downstream.
 | Type | How | Pros | Cons |
@@ -28,6 +100,23 @@ quiz:
   - q: "Which captures hard deletes?"
     options: ["SELECT … WHERE updated_at > watermark", "Log-based CDC", "Full snapshot comparison never", "Increasing id filter"]
     answer: 1
+  - q: "Which column decides the order in which CDC events for one key are applied?"
+    options: ["the row's city", "the log sequence number / commit position", "the time the event arrived in the warehouse", "the primary key"]
+    answer: 1
+    explain: "Events can arrive out of order; the source's log position reflects the true order of changes."
+  - q: "A query-based CDC job filters `updated_at > last_watermark`. Which change will it miss?"
+    options: ["a row that was hard-deleted in the source", "a new row", "an updated row with a new updated_at", "a row with a NULL city"]
+    answer: 0
+    explain: "Deleted rows no longer exist to be selected; only log-based CDC or soft deletes capture them."
+recall:
+  - q: "Explain query-based vs log-based CDC and how you apply change events in the warehouse."
+    keyPoints:
+      - "query-based uses updated_at watermark"
+      - "misses hard deletes and intermediate changes"
+      - "log-based reads binlog or WAL (Debezium, Datastream)"
+      - "keep latest event per key by LSN"
+      - "MERGE with insert, update, delete"
+      - "land raw events append-only first"
 exercises:
   - id: etl-cdc-1
     lang: sql
